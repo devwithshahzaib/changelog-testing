@@ -54,26 +54,25 @@ class VersionManager {
     let [, major, minor, patch] = match.map(Number);
 
     switch (increment) {
-      case 'major':
-        major++;
-        minor = 0;
-        patch = 0;
-        break;
-      case 'minor':
-        minor++;
-        patch = 0;
-        break;
-      case 'patch':
-      default:
-        // Custom patch increment: 0 -> 100 -> 101 -> 102...
-        if (patch === 0) {
-          patch = 100;
-        } else {
-          patch++;
-        }
-        break;
+    case 'major':
+      major++;
+      minor = 0;
+      patch = 0;
+      break;
+    case 'minor':
+      minor++;
+      patch = 0;
+      break;
+    case 'patch':
+    default:
+    // Custom patch increment: 0 -> 100 -> 101 -> 102...
+      if (patch === 0) {
+        patch = 100;
+      } else {
+        patch++;
+      }
+      break;
     }
-
     return `${major}.${minor}.${patch}`;
   }
 
