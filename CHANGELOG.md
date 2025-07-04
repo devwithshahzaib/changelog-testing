@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 **Author:** Doron Segal
+**Commit:** [99a5a50](https://github.com/doron2402/changelog-test/commit/99a5a502bae2b80803ec0044937c9c24e8020b4e)
+**Message:** Merge pull request #2 from doron2402/test1
+
+Test1
+___
+
+
+
+All notable changes to this project will be documented in this file.
+
+**Author:** Doron Segal
 **Commit:** [8e5b6af](https://github.com/doron2402/changelog-test/commit/8e5b6afe2298cbcf0a803cb6119945955fa80117)
 **Message:** fix: cleanup changelog file and adding husky
 ___
