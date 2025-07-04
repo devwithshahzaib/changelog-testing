@@ -1,0 +1,192 @@
+# Auto-update changelog and version on merge to master
+# This workflow automatically increments the version, updates changelog, and commits changes
+name: Auto Changelog Update
+
+on:
+  push:
+    branches:
+      - master
+      - main  # Support both master and main branch names
+
+# Security: Limit permissions to minimum required
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+
+    # Skip if commit message contains [skip-changelog] or if it's already a version commit
+    if: "!contains(github.event.head_commit.message, '[skip-changelog]') && !contains(github.event.head_commit.message, 'chore: update version and changelog')"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history to get commit details
+          fetch-depth: 0
+          # Use GitHub token for authentication
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Configure Git
+        run: |
+          # Configure git with GitHub Actions bot credentials
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Read current version from package.json
+        id: current_version
+        run: |
+          # Extract current version using jq for safe JSON parsing
+          CURRENT_VERSION=$(jq -r '.version' package.json)
+          echo "Current version: $CURRENT_VERSION"
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Calculate new version
+        id: new_version
+        run: |
+          # Parse version components with custom patch versioning (0, 100, 101, 102...)
+          CURRENT_VERSION="${{ steps.current_version.outputs.current_version }}"
+
+          # Split version into components
+          IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+
+          # Custom patch increment logic: 0 -> 100 -> 101 -> 102...
+          if [ "$patch" = "0" ]; then
+            NEW_PATCH=100
+          else
+            # If patch is already >= 100, increment normally
+            NEW_PATCH=$((patch + 1))
+          fi
+
+          NEW_VERSION="$major.$minor.$NEW_PATCH"
+
+          echo "Version increment: $patch -> $NEW_PATCH"
+          echo "New version: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update package.json version
+        run: |
+          # Update version in package.json using jq for safe JSON manipulation
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          jq --arg version "$NEW_VERSION" '.version = $version' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          echo "Updated package.json with version: $NEW_VERSION"
+
+      - name: Update changelog
+        run: |
+          # Prepare changelog entry variables
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          GIT_SHA="${{ github.sha }}"
+          SHORT_SHA="${GIT_SHA:0:7}"
+          AUTHOR="${{ github.event.head_commit.author.name }}"
+          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+          CURRENT_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          # Create changelog entry
+          CHANGELOG_ENTRY="## [$NEW_VERSION] - $CURRENT_DATE
+
+          **Author:** $AUTHOR
+          **Commit:** [$SHORT_SHA](https://github.com/${{ github.repository }}/commit/$GIT_SHA)
+          **Message:** $COMMIT_MESSAGE
+
+          "
+
+          # Check if CHANGELOG.md exists, create if it doesn't
+          if [ ! -f CHANGELOG.md ]; then
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+
+          # Create temporary file with new entry at the top
+          echo "$CHANGELOG_ENTRY" > changelog_temp.md
+
+          # Skip the first line (# Changelog) and add the rest
+          tail -n +2 CHANGELOG.md >> changelog_temp.md
+
+          # Add the header back
+          echo "# Changelog" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+
+          # Add the new content
+          tail -n +4 changelog_temp.md >> CHANGELOG.md
+
+          # Clean up temporary file
+          rm changelog_temp.md
+
+          echo "Updated CHANGELOG.md with new version entry"
+
+      - name: Commit and push changes
+        run: |
+          # Add the modified files
+          git add package.json CHANGELOG.md
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          # Commit changes with descriptive message
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          git commit -m "chore: update version and changelog to $NEW_VERSION [skip-changelog]"
+
+          # Push changes back to the repository
+          git push origin ${{ github.ref_name }}
+
+          echo "Successfully committed and pushed version $NEW_VERSION"
+
+      - name: Create Git tag
+        run: |
+          # Create and push a git tag for the new version
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          git tag -a "v$NEW_VERSION" -m "Version $NEW_VERSION"
+          git push origin "v$NEW_VERSION"
+
+          echo "Created and pushed tag v$NEW_VERSION"
+
+  # Optional: Create a GitHub release
+  create-release:
+    needs: update-changelog
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Get new version
+        id: get_version
+        run: |
+          NEW_VERSION=$(jq -r '.version' package.json)
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: Release v${{ steps.get_version.outputs.version }}
+          body: |
+            ## Changes
+            Check the [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for detailed changes.
+
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ steps.get_version.outputs.version }}...v${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
