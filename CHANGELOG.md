@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.108]
+***Date:*** 2025-07-04 14:16:44 UTC
+***Author:*** Doron Segal
+***Commit:*** [c09fc94](https://github.com/doron2402/changelog-test/commit/c09fc944ae32d9646665777d480549b2d72f19e6)
+**Message:** t push oMerge branch 'master' of github.com:doron2402/changelog-test
+___
+
+
 ## [1.0.107]
 ***Date:*** 2025-07-04 14:15:34 UTC
 ***Author:*** Doron Segal
