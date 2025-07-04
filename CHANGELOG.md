@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.111]
+***Date:*** 2025-07-04 14:31:59 UTC
+
+***Author:*** Doron Segal
+
+***Commit:*** [fa7320c](https://github.com/doron2402/changelog-test/commit/fa7320ce9ae6552a338464c883211563f3cee993)
+
+**Message:** Update pr.yml
+___
+
+
 ## [1.0.110]
 ***Date:*** 2025-07-04 14:21:49 UTC
 
