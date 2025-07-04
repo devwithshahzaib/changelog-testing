@@ -163,7 +163,20 @@ jobs:
         id: workflow_changes
         run: |
           # Check if any workflow files were modified
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD)
+          # Use a more robust approach that doesn't rely on origin/ prefix
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+
+          echo "Checking changes from $BASE_REF ($BASE_SHA) to $HEAD_SHA"
+
+          # Try to get changed files using the base SHA
+          if git rev-parse --verify $BASE_SHA >/dev/null 2>&1; then
+            CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA)
+          else
+            echo "⚠️ Base SHA not found, checking all files"
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+          fi
 
           if echo "$CHANGED_FILES" | grep -q ".github/workflows/"; then
             echo "workflow_changed=true" >> $GITHUB_OUTPUT
