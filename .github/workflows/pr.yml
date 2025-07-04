@@ -1,0 +1,396 @@
+# Pull Request Testing and Quality Checks Workflow
+# Runs comprehensive tests and quality checks on pull requests to master/main
+name: PR Quality Checks
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+    # Run on these PR events
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Security: Limit permissions to minimum required
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  statuses: write
+
+# Prevent multiple workflow runs for the same PR
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Job 1: Validate commit messages in the PR
+  validate-commits:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Fetch enough history to validate all commits in PR
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install commitlint dependencies
+        run: |
+          npm install -g @commitlint/cli @commitlint/config-conventional
+
+      - name: Create commitlint config
+        run: |
+          cat > commitlint.config.js << 'EOF'
+          module.exports = {
+            extends: ['@commitlint/config-conventional'],
+            rules: {
+              'type-enum': [2, 'always', [
+                'feat', 'fix', 'docs', 'style', 'refactor',
+                'perf', 'test', 'chore', 'ci', 'build', 'revert', 'hotfix'
+              ]],
+              'subject-min-length': [2, 'always', 10],
+              'subject-max-length': [2, 'always', 100],
+              'header-max-length': [2, 'always', 120],
+              'subject-case': [2, 'always', 'lower-case'],
+              'subject-full-stop': [2, 'never', '.']
+            },
+            ignores: [
+              (commit) => commit.includes('Merge'),
+              (commit) => commit.includes('chore: update version and changelog'),
+              (commit) => commit.startsWith('Revert')
+            ]
+          };
+          EOF
+
+      - name: Validate all commits in PR
+        run: |
+          # Get the base and head commit SHAs
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          echo "Validating commits from $BASE_SHA to $HEAD_SHA"
+
+          # Validate all commits in the PR
+          npx commitlint --from=$BASE_SHA --to=$HEAD_SHA --verbose
+
+  # Job 2: Run tests and quality checks
+  test-and-quality:
+    name: Tests & Quality Checks
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    strategy:
+      matrix:
+        node-version: [16, 18, 20]
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          echo "✅ Dependencies installed successfully"
+
+      - name: Run linting
+        run: |
+          echo "🔍 Running ESLint..."
+          npm run lint
+          echo "✅ Linting passed"
+
+      - name: Run tests
+        run: |
+          echo "🧪 Running test suite..."
+          npm test
+          echo "✅ Tests passed"
+
+      - name: Run tests with coverage
+        if: matrix.node-version == 18  # Only run coverage on one Node version
+        run: |
+          echo "📊 Running tests with coverage..."
+          npm run test:coverage
+          echo "✅ Coverage tests completed"
+
+      - name: Upload coverage reports
+        if: matrix.node-version == 18
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Check for security vulnerabilities
+        if: matrix.node-version == 18  # Only run security check once
+        run: |
+          echo "🔒 Checking for security vulnerabilities..."
+          npm audit --audit-level=moderate
+          echo "✅ Security check completed"
+
+  # Job 3: Validate workflow files
+  validate-workflows:
+    name: Validate Workflows
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Check if workflow files changed
+        id: workflow_changes
+        run: |
+          # Check if any workflow files were modified
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+
+          if echo "$CHANGED_FILES" | grep -q ".github/workflows/"; then
+            echo "workflow_changed=true" >> $GITHUB_OUTPUT
+            echo "🔍 Workflow files were modified, will validate"
+          else
+            echo "workflow_changed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No workflow files modified"
+          fi
+
+      - name: Install actionlint
+        if: steps.workflow_changes.outputs.workflow_changed == 'true'
+        run: |
+          # Install actionlint for workflow validation
+          bash <(curl https://raw.githubusercontent.com/rhymond/actionlint/main/scripts/download-actionlint.bash)
+          sudo mv actionlint /usr/local/bin/
+
+      - name: Validate workflow files
+        if: steps.workflow_changes.outputs.workflow_changed == 'true'
+        run: |
+          echo "🔍 Validating GitHub workflow files..."
+          actionlint .github/workflows/*.yml
+          echo "✅ All workflow files are valid"
+
+  # Job 4: Build verification
+  build-verification:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Verify build (if build script exists)
+        run: |
+          # Check if build script exists and run it
+          if npm run | grep -q "build"; then
+            echo "🏗️ Running build verification..."
+            npm run build
+            echo "✅ Build completed successfully"
+          else
+            echo "ℹ️ No build script found, skipping build verification"
+          fi
+
+      - name: Check package.json validity
+        run: |
+          echo "📦 Validating package.json..."
+          npx jsonlint package.json
+          echo "✅ package.json is valid"
+
+      - name: Verify package installation
+        run: |
+          echo "📦 Verifying clean package installation..."
+          rm -rf node_modules package-lock.json
+          npm install
+          npm test -- --passWithNoTests
+          echo "✅ Clean installation successful"
+
+  # Job 5: Comment PR with results summary
+  pr-summary:
+    name: PR Summary
+    runs-on: ubuntu-latest
+    needs: [validate-commits, test-and-quality, validate-workflows, build-verification]
+    if: always() && github.event.pull_request.draft == false
+
+    steps:
+      - name: Generate PR summary comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const results = {
+              'validate-commits': '${{ needs.validate-commits.result }}',
+              'test-and-quality': '${{ needs.test-and-quality.result }}',
+              'validate-workflows': '${{ needs.validate-workflows.result }}',
+              'build-verification': '${{ needs.build-verification.result }}'
+            };
+
+            const getEmoji = (status) => {
+              switch(status) {
+                case 'success': return '✅';
+                case 'failure': return '❌';
+                case 'cancelled': return '⏹️';
+                case 'skipped': return '⏭️';
+                default: return '⚠️';
+              }
+            };
+
+            const allPassed = Object.values(results).every(result =>
+              result === 'success' || result === 'skipped'
+            );
+
+            const summary = `## 🔍 PR Quality Check Results
+
+            ${allPassed ? '🎉 All checks passed!' : '⚠️ Some checks failed or were skipped'}
+
+            | Check | Status | Result |
+            |-------|--------|---------|
+            | Commit Messages | ${getEmoji(results['validate-commits'])} | ${results['validate-commits']} |
+            | Tests & Quality | ${getEmoji(results['test-and-quality'])} | ${results['test-and-quality']} |
+            | Workflow Validation | ${getEmoji(results['validate-workflows'])} | ${results['validate-workflows']} |
+            | Build Verification | ${getEmoji(results['build-verification'])} | ${results['build-verification']} |
+
+            ${allPassed
+              ? '✅ **This PR is ready for review!**'
+              : '❌ **Please fix the failing checks before merging.**'
+            }
+
+            ---
+            <details>
+            <summary>📋 Checklist for reviewers</summary>
+
+            - [ ] Code follows project coding standards
+            - [ ] Tests cover new functionality
+            - [ ] Documentation is updated if needed
+            - [ ] No breaking changes (or properly documented)
+            - [ ] Performance impact is acceptable
+            - [ ] Security implications reviewed
+            </details>
+            `;
+
+            // Post comment on PR
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+  # Job 6: Auto-assign reviewers (optional)
+  auto-assign:
+    name: Auto-assign Reviewers
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened' && github.event.pull_request.draft == false
+
+    steps:
+      - name: Auto-assign reviewers
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Define potential reviewers (customize for your team)
+            const reviewers = ['reviewer1', 'reviewer2', 'reviewer3'];
+            const author = context.payload.pull_request.user.login;
+
+            // Remove the PR author from reviewers list
+            const availableReviewers = reviewers.filter(reviewer => reviewer !== author);
+
+            if (availableReviewers.length > 0) {
+              // Assign up to 2 reviewers
+              const selectedReviewers = availableReviewers.slice(0, 2);
+
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                reviewers: selectedReviewers
+              });
+
+              console.log(`Assigned reviewers: ${selectedReviewers.join(', ')}`);
+            }
+
+  # Job 7: Label management
+  manage-labels:
+    name: Manage PR Labels
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Add labels based on changes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            const labels = [];
+            const fileNames = files.map(file => file.filename);
+
+            // Add labels based on file changes
+            if (fileNames.some(file => file.includes('test') || file.includes('spec'))) {
+              labels.push('tests');
+            }
+
+            if (fileNames.some(file => file.includes('.md'))) {
+              labels.push('documentation');
+            }
+
+            if (fileNames.some(file => file.includes('.github/workflows'))) {
+              labels.push('ci/cd');
+            }
+
+            if (fileNames.some(file => file.includes('package.json'))) {
+              labels.push('dependencies');
+            }
+
+            // Determine size label based on changes
+            const totalChanges = files.reduce((sum, file) => sum + file.changes, 0);
+            if (totalChanges < 50) {
+              labels.push('size/small');
+            } else if (totalChanges < 200) {
+              labels.push('size/medium');
+            } else {
+              labels.push('size/large');
+            }
+
+            // Add labels to PR
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labels
+              });
+            }

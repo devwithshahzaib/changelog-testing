@@ -4,8 +4,6 @@
  */
 
 const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
 
 // Mock data for testing
 const MOCK_PACKAGE_JSON = {
@@ -29,7 +27,7 @@ class VersionManager {
    * @param {string} packagePath - Path to package.json file
    * @returns {string} Current version string
    */
-  static getCurrentVersion(packagePath = './package.json') {
+  static getCurrentVersion (packagePath = './package.json') {
     try {
       const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
       return packageData.version;
@@ -45,7 +43,7 @@ class VersionManager {
    * @param {string} increment - Type of increment (major, minor, patch)
    * @returns {string} New version string
    */
-  static calculateNextVersion(currentVersion, increment = 'patch') {
+  static calculateNextVersion (currentVersion, increment = 'patch') {
     const versionRegex = /^(\d+)\.(\d+)\.(\d+)$/;
     const match = currentVersion.match(versionRegex);
 
@@ -84,7 +82,7 @@ class VersionManager {
    * @param {string} newVersion - New version to set
    * @param {string} packagePath - Path to package.json file
    */
-  static updatePackageVersion(newVersion, packagePath = './package.json') {
+  static updatePackageVersion (newVersion, packagePath = './package.json') {
     try {
       const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
       packageData.version = newVersion;
@@ -108,7 +106,7 @@ class ChangelogManager {
    * @param {string} commitData.message - Commit message
    * @returns {string} Formatted changelog entry
    */
-  static generateChangelogEntry(version, commitData) {
+  static generateChangelogEntry (version, commitData) {
     const currentDate = new Date().toISOString().split('T')[0];
     const shortSha = commitData.sha.substring(0, 7);
 
@@ -126,7 +124,7 @@ class ChangelogManager {
    * @param {string} newEntry - New changelog entry to add
    * @param {string} changelogPath - Path to changelog file
    */
-  static updateChangelog(newEntry, changelogPath = './CHANGELOG.md') {
+  static updateChangelog (newEntry, changelogPath = './CHANGELOG.md') {
     try {
       let existingContent = '';
 
