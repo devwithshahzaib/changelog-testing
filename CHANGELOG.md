@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.110]
+***Date:*** 2025-07-04 14:21:49 UTC
+
+***Author:*** Doron Segal
+
+***Commit:*** [2ae222c](https://github.com/doron2402/changelog-test/commit/2ae222c70f56f6d8f7104c8d7b05fde7f9943c7b)
+
+**Message:** Merge brt push origin branch 'master' of github.com:doron2402/changelog-test
+___
+
+
 ## [1.0.109]\n
 ***Date:*** 2025-07-04 14:18:19 UTC\n
 ***Author:*** Doron Segal\n
