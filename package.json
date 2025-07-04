@@ -1,6 +1,6 @@
 {
   "name": "auto-changelog-workflow",
-  "version": "1.0.106",
+  "version": "1.0.107",
   "description": "Automated changelog and version management workflow",
   "main": "index.js",
   "scripts": {
