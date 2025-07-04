@@ -92,10 +92,13 @@ jobs:
           CURRENT_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
           # Create changelog entry
-          CHANGELOG_ENTRY="## [$NEW_VERSION]\n
-          ***Date:*** $CURRENT_DATE\n
-          ***Author:*** $AUTHOR\n
-          ***Commit:*** [$SHORT_SHA](https://github.com/${{ github.repository }}/commit/$GIT_SHA)\n
+          CHANGELOG_ENTRY="## [$NEW_VERSION]
+          ***Date:*** $CURRENT_DATE
+
+          ***Author:*** $AUTHOR
+
+          ***Commit:*** [$SHORT_SHA](https://github.com/${{ github.repository }}/commit/$GIT_SHA)
+
           **Message:** $COMMIT_MESSAGE
           ___
 
