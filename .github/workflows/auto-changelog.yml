@@ -94,9 +94,11 @@ jobs:
           # Create changelog entry
           CHANGELOG_ENTRY="## [$NEW_VERSION] - $CURRENT_DATE
 
+          **Version:** $NEW_VERSION
           **Author:** $AUTHOR
           **Commit:** [$SHORT_SHA](https://github.com/${{ github.repository }}/commit/$GIT_SHA)
           **Message:** $COMMIT_MESSAGE
+          ___
 
           "
 
