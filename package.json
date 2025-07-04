@@ -42,7 +42,9 @@
       "**/*.js",
       "!**/node_modules/**",
       "!**/coverage/**",
-      "!jest.config.js"
+      "!jest.config.js",
+      "!knexfile.js",
+      "!migrations/**"
     ],
     "coverageThreshold": {
       "global": {
