@@ -62,7 +62,7 @@ jobs:
               'subject-min-length': [2, 'always', 10],
               'subject-max-length': [2, 'always', 100],
               'header-max-length': [2, 'always', 120],
-              'subject-case': [2, 'always', 'lower-case'],
+              'subject-case': [2, 'always', 'lowercase'],
               'subject-full-stop': [2, 'never', '.']
             },
             ignores: [
