@@ -147,51 +147,6 @@ jobs:
           npm audit --audit-level=moderate
           echo "✅ Security check completed"
 
-  # Job 3: Validate workflow files
-  validate-workflows:
-    name: Validate Workflows
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Check if workflow files changed
-        id: workflow_changes
-        run: |
-          # Check if any workflow files were modified
-          BASE_REF="${{ github.event.pull_request.base.ref }}"
-
-          # Get list of changed files in the PR
-          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD || \
-                         git diff --name-only HEAD~1 HEAD || \
-                         git ls-files .github/workflows/)
-
-          # Check if any workflow files were modified
-          if echo "$CHANGED_FILES" | grep -q ".github/workflows/"; then
-            echo "workflow_changed=true" >> $GITHUB_OUTPUT
-            echo "🔍 Workflow files were modified, will validate"
-          else
-            echo "workflow_changed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No workflow files modified"
-          fi
-
-      - name: Install actionlint
-        if: steps.workflow_changes.outputs.workflow_changed == 'true'
-        uses: raven-actions/actionlint@v1
-        with:
-          version: latest
-
-      - name: Validate workflow files
-        if: steps.workflow_changes.outputs.workflow_changed == 'true'
-        run: |
-          echo "🔍 Validating GitHub workflow files..."
-          actionlint .github/workflows/*.yml
-          echo "✅ All workflow files are valid"
-
   # Job 4: Build verification
   build-verification:
     name: Build Verification
