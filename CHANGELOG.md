@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.112]
+***Date:*** 2025-07-04 14:39:33 UTC
+
+***Author:*** Doron Segal
+
+***Commit:*** [6a331c2](https://github.com/doron2402/changelog-test/commit/6a331c2eadfda85ed7a03c98d50b6017870ebbb1)
+
+**Message:** Merge pull request #5 from doron2402/migrations
+
+Migrations
+___
+
+
 ## [1.0.111]
 ***Date:*** 2025-07-04 14:31:59 UTC
 
