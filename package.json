@@ -10,7 +10,8 @@
     "test:workflow": "jest --testPathPattern=workflow",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "validate-workflow": "actionlint .github/workflows/auto-changelog.yml"
+    "validate-workflow": "actionlint .github/workflows/auto-changelog.yml",
+    "prepare": "husky install"
   },
   "keywords": [
     "changelog",
@@ -77,6 +78,12 @@
       "prefer-const": "error",
       "no-var": "error"
     }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ]
   },
   "dependencies": {
     "express": "^5.1.0"
