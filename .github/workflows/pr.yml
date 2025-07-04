@@ -181,10 +181,9 @@ jobs:
 
       - name: Install actionlint
         if: steps.workflow_changes.outputs.workflow_changed == 'true'
-        run: |
-          # Install actionlint for workflow validation
-          bash <(curl https://raw.githubusercontent.com/rhymond/actionlint/main/scripts/download-actionlint.bash)
-          sudo mv actionlint /usr/local/bin/
+        uses: raven-actions/actionlint@v1
+        with:
+          version: latest
 
       - name: Validate workflow files
         if: steps.workflow_changes.outputs.workflow_changed == 'true'
