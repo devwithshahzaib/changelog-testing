@@ -22,4 +22,7 @@ A Node.js application with automated testing, quality checks, and changelog gene
 
 ## 🛠️ Quick Setup
 
-### 1. Install Dependencies
+
+## Updates
+- Just a demo
+
