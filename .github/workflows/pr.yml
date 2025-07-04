@@ -290,6 +290,10 @@ jobs:
               labels.push('tests');
             }
 
+            if (fileNames.some(file => file.includes('migrations/'))) { 
+              labels.push('migrations');
+            }
+
             if (fileNames.some(file => file.includes('.md'))) {
               labels.push('documentation');
             }
