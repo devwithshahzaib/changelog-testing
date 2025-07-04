@@ -16,6 +16,7 @@ permissions:
   pull-requests: write
   checks: write
   statuses: write
+  issues: write
 
 # Prevent multiple workflow runs for the same PR
 concurrency:
@@ -302,37 +303,37 @@ jobs:
               body: summary
             });
 
-  # Job 6: Auto-assign reviewers (optional)
-  auto-assign:
-    name: Auto-assign Reviewers
-    runs-on: ubuntu-latest
-    if: github.event.action == 'opened' && github.event.pull_request.draft == false
+  # # Job 6: Auto-assign reviewers (optional)
+  # auto-assign:
+  #   name: Auto-assign Reviewers
+  #   runs-on: ubuntu-latest
+  #   if: github.event.action == 'opened' && github.event.pull_request.draft == false
 
-    steps:
-      - name: Auto-assign reviewers
-        uses: actions/github-script@v7
-        with:
-          script: |
-            // Define potential reviewers (customize for your team)
-            const reviewers = ['reviewer1', 'reviewer2', 'reviewer3'];
-            const author = context.payload.pull_request.user.login;
+  #   steps:
+  #     - name: Auto-assign reviewers
+  #       uses: actions/github-script@v7
+  #       with:
+  #         script: |
+  #           // Define potential reviewers (customize for your team)
+  #           const reviewers = ['reviewer1', 'reviewer2', 'reviewer3'];
+  #           const author = context.payload.pull_request.user.login;
 
-            // Remove the PR author from reviewers list
-            const availableReviewers = reviewers.filter(reviewer => reviewer !== author);
+  #           // Remove the PR author from reviewers list
+  #           const availableReviewers = reviewers.filter(reviewer => reviewer !== author);
 
-            if (availableReviewers.length > 0) {
-              // Assign up to 2 reviewers
-              const selectedReviewers = availableReviewers.slice(0, 2);
+  #           if (availableReviewers.length > 0) {
+  #             // Assign up to 2 reviewers
+  #             const selectedReviewers = availableReviewers.slice(0, 2);
 
-              await github.rest.pulls.requestReviewers({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.issue.number,
-                reviewers: selectedReviewers
-              });
+  #             await github.rest.pulls.requestReviewers({
+  #               owner: context.repo.owner,
+  #               repo: context.repo.repo,
+  #               pull_number: context.issue.number,
+  #               reviewers: selectedReviewers
+  #             });
 
-              console.log(`Assigned reviewers: ${selectedReviewers.join(', ')}`);
-            }
+  #             console.log(`Assigned reviewers: ${selectedReviewers.join(', ')}`);
+  #           }
 
   # Job 7: Label management
   manage-labels:
