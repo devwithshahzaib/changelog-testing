@@ -86,13 +86,8 @@ jobs:
       - name: Run version upgrade script
         id: upgrade_version
         run: |
-          node upgrade_version.js patch
-
-      - name: Read new version from package.json
-        id: new_version
-        run: |
-          NEW_VERSION=$(jq -r '.version' package.json)
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          # Run the version upgrade script and capture the new version
+          NEW_VERSION=$(node upgrade_version.js patch)
           echo "New version: $NEW_VERSION"
       - name: Update changelog
         run: |
