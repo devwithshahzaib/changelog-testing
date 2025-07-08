@@ -192,7 +192,7 @@ jobs:
                   },
                   {
                     "type": "mrkdwn",
-                    "text": "*Changes:*\n${PR_TITLE}"
+                    "text": "*PR Title:*\n${PR_TITLE}"
                   }
                 ]
               },
