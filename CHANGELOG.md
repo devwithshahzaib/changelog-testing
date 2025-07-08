@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.114]
+***Date:*** 2025-07-08 07:43:04 UTC
+
+***Author:*** devwithshahzaib
+
+***Commit:*** [5a07feb](https://github.com/devwithshahzaib/changelog-testing/commit/5a07feb2515d6334880df1e906926f6943dc0f3d)
+
+**Message:** fix: v3
+___
+
+
 ## [1.0.113]
 ***Date:*** 2025-07-08 07:25:48 UTC
 
