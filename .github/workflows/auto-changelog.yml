@@ -32,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
           cache: "npm"
 
       - name: Configure Git
@@ -192,7 +192,7 @@ jobs:
                   },
                   {
                     "type": "mrkdwn",
-                    "text": "*Changes:*\n\`${PR_TITLE}\`"
+                    "text": "*Changes:*\n${PR_TITLE}"
                   }
                 ]
               },
