@@ -6,7 +6,7 @@ on:
   push:
     branches:
       - master
-      - main  # Support both master and main branch names
+      - main # Support both master and main branch names
 
 # Security: Limit permissions to minimum required
 permissions:
@@ -32,14 +32,44 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: Configure Git
         run: |
           # Configure git with GitHub Actions bot credentials
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+
+      - name: Get PR title and author (via GitHub API)
+        id: pr_info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commitSha = context.sha;
+
+            const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: commitSha,
+            });
+
+            if (prs.data.length > 0) {
+              const pr = prs.data[0];
+              core.setOutput('pr_title', pr.title);
+              core.setOutput('author', pr.user.login);
+            } else {
+              core.setOutput('pr_title', context.payload.head_commit.message);
+              core.setOutput('author', context.payload.head_commit.author?.name || 'unknown');
+            }
+
+      - name: Get previous tag
+        id: prev_tag
+        run: |
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+          echo "Previous tag: $PREV_TAG"
 
       - name: Read current version from package.json
         id: current_version
@@ -87,8 +117,8 @@ jobs:
           NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
           GIT_SHA="${{ github.sha }}"
           SHORT_SHA="${GIT_SHA:0:7}"
-          AUTHOR="${{ github.event.head_commit.author.name }}"
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+          AUTHOR="${{ steps.pr_info.outputs.author }}"
+          PR_TITLE="${{ steps.pr_info.outputs.pr_title }}"
           CURRENT_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
           # Create changelog entry
@@ -99,7 +129,7 @@ jobs:
 
           ***Commit:*** [$SHORT_SHA](https://github.com/${{ github.repository }}/commit/$GIT_SHA)
 
-          **Message:** $COMMIT_MESSAGE
+          **Message:** $PR_TITLE
           ___
 
           "
@@ -129,7 +159,6 @@ jobs:
           # Commit changes with descriptive message
           NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
           git commit -m "chore: update version and changelog to $NEW_VERSION [skip-changelog]"
-
           # Push changes back to the repository
           git push origin ${{ github.ref_name }}
 
@@ -149,10 +178,11 @@ jobs:
           # Prepare Slack notification variables
           NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
           AUTHOR="${{ github.event.head_commit.author.name }}"
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+          PR_TITLE="${{ steps.pr_info.outputs.pr_title }}"
           REPO_NAME="${{ github.repository }}"
           GIT_SHA="${{ github.sha }}"
           SHORT_SHA="${GIT_SHA:0:7}"
+          PREV_TAG="${{ steps.prev_tag.outputs.prev_tag }}"
 
           # Create Slack message payload
           SLACK_PAYLOAD=$(cat <<EOF
@@ -184,6 +214,10 @@ jobs:
                   {
                     "type": "mrkdwn",
                     "text": "*Commit:*\n<https://github.com/${REPO_NAME}/commit/${GIT_SHA}|${SHORT_SHA}>"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Changes:*\n\`${PR_TITLE}\`"
                   }
                 ]
               },
@@ -191,7 +225,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "*Commit Message:*\n\`${COMMIT_MESSAGE}\`"
+                  "text": "*Compare Changes:*\n<https://github.com/${REPO_NAME}/compare/${PREV_TAG}...v${NEW_VERSION}|View diff ${PREV_TAG}...v${NEW_VERSION}>"
                 }
               },
               {
@@ -232,7 +266,7 @@ jobs:
           # Send notification to Slack
           curl -X POST -H 'Content-type: application/json' \
             --data "${SLACK_PAYLOAD}" \
-            https://hooks.slack.com/services/T01700LANLX/B059HF6UW1H/${{ secrets.SLACK_TOKEN }}
+            https://hooks.slack.com/services/T094LRGN5EX/B0955QA0DCH/${{ secrets.SLACK_TOKEN }}
 
           echo "✅ Slack notification sent successfully"
 
@@ -255,6 +289,14 @@ jobs:
           NEW_VERSION=$(jq -r '.version' package.json)
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
+      - name: Get previous tag
+        id: prev_tag
+        run: |
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 "v${{ steps.get_version.outputs.version }}^" 2>/dev/null || echo "v0.0.0")
+          echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+          echo "Previous tag: $PREV_TAG"
+
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
@@ -266,6 +308,6 @@ jobs:
             ## Changes
             Check the [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for detailed changes.
 
-            **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ steps.get_version.outputs.version }}...v${{ steps.get_version.outputs.version }}
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.prev_tag.outputs.prev_tag }}...v${{ steps.get_version.outputs.version }}
           draft: false
           prerelease: false
