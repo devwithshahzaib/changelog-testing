@@ -174,7 +174,9 @@ jobs:
           echo "Created and pushed tag v$NEW_VERSION"
 
       - name: Send Slack notification
-        if: secrets.SLACK_WEBHOOK_URL != ''
+        if: "${{ secrets.SLACK_WEBHOOK_URL != '' }}"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           # Prepare Slack notification variables
           NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
@@ -267,7 +269,7 @@ jobs:
           # Send notification to Slack
           curl -X POST -H 'Content-type: application/json' \
             --data "${SLACK_PAYLOAD}" \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+            $SLACK_WEBHOOK_URL
 
           echo "✅ Slack notification sent successfully"
 
