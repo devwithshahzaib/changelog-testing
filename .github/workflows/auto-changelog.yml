@@ -174,13 +174,10 @@ jobs:
           echo "Created and pushed tag v$NEW_VERSION"
 
       - name: Send Slack notification
-        if: "${{ secrets.SLACK_WEBHOOK_URL != '' }}"
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           # Prepare Slack notification variables
           NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
-          AUTHOR="${{ steps.pr_info.outputs.author }}"
+          AUTHOR="${{ github.event.head_commit.author.name }}"
           PR_TITLE="${{ steps.pr_info.outputs.pr_title }}"
           REPO_NAME="${{ github.repository }}"
           GIT_SHA="${{ github.sha }}"
@@ -269,7 +266,7 @@ jobs:
           # Send notification to Slack
           curl -X POST -H 'Content-type: application/json' \
             --data "${SLACK_PAYLOAD}" \
-            $SLACK_WEBHOOK_URL
+            ${{ secrets.SLACK_WEBHOOK_URL }}
 
           echo "✅ Slack notification sent successfully"
 
