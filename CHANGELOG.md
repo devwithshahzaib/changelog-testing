@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.115]
+***Date:*** 2025-07-08 08:30:04 UTC
+
+***Author:*** devwithshahzaib
+
+***Commit:*** [fc9084a](https://github.com/devwithshahzaib/changelog-testing/commit/fc9084ae7ca16ecd09135cd85c7f64519b54b783)
+
+**Message:** chore: ensure changes are staged before committing version and change…
+___
+
+
 ## []
 ***Date:*** 2025-07-08 08:24:59 UTC
 
