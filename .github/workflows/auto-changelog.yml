@@ -141,7 +141,8 @@ jobs:
 
           # Commit changes with descriptive message
           NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
-          git commit -m "chore: update version and changelog to $NEW_VERSION [skip-changelog]"
+          git add .
+          git commit -m "chore: update version and changelog to $NEW_VERSION [skip-changelog]" --no-verify
           # Push changes back to the repository
           git push origin ${{ github.ref_name }}
 
