@@ -157,12 +157,30 @@ jobs:
           # Add the modified files
           git add .
 
-          # Commit changes with descriptive message
+          # Get PR title and determine if it's a minor upgrade
+          PR_TITLE="${{ steps.pr_info.outputs.pr_title }}"
           NEW_VERSION="${{ steps.upgrade_version.outputs.version }}"
+
+          # Commit changes with descriptive message
           git commit -m "chore: update version and changelog to $NEW_VERSION [skip-changelog]" --no-verify
 
           # Push changes back to the repository
           git push origin ${{ github.ref_name }}
+
+          # Create and push tag only for minor upgrades
+          if [[ "$PR_TITLE" =~ \[minor-upgrade\] ]]; then
+            echo "Minor upgrade detected - creating tag"
+            # Get the previous tag
+            PREV_TAG=$(git describe --tags --abbrev=0 "v$NEW_VERSION^" 2>/dev/null || echo "v0.0.0")
+            echo "Previous tag: $PREV_TAG"
+            
+            # Create and push a git tag for the new version
+            git tag -a "v$NEW_VERSION" -m "Version $NEW_VERSION"
+            git push origin "v$NEW_VERSION"
+            echo "Created and pushed tag v$NEW_VERSION"
+          else
+            echo "Not a minor upgrade - skipping tag creation"
+          fi
 
           echo "Successfully committed and pushed version $NEW_VERSION"
 
@@ -175,8 +193,16 @@ jobs:
           REPO_NAME="${{ github.repository }}"
           GIT_SHA="${{ github.sha }}"
           SHORT_SHA="${GIT_SHA:0:7}"
-          PREV_COMMIT="${{ steps.prev_commit.outputs.prev_commit }}"
-          PREV_COMMIT_SHORT="${PREV_COMMIT:0:7}"
+
+          # Get comparison tag based on whether it's a minor upgrade
+          if [[ "$PR_TITLE" =~ \[minor-upgrade\] ]]; then
+            PREV_TAG=$(git describe --tags --abbrev=0 "v$NEW_VERSION^" 2>/dev/null || echo "v0.0.0")
+            COMPARE_TEXT="*Compare Changes:*\n<https://github.com/${REPO_NAME}/compare/${PREV_TAG}...v${NEW_VERSION}|View diff ${PREV_TAG}...v${NEW_VERSION}>"
+          else
+            PREV_COMMIT="${{ steps.prev_commit.outputs.prev_commit }}"
+            PREV_COMMIT_SHORT="${PREV_COMMIT:0:7}"
+            COMPARE_TEXT="*Compare Changes:*\n<https://github.com/${REPO_NAME}/compare/${PREV_COMMIT}...${GIT_SHA}|View diff ${PREV_COMMIT_SHORT}...${SHORT_SHA}>"
+          fi
 
           # Create Slack message payload
           SLACK_PAYLOAD=$(cat <<EOF
@@ -219,7 +245,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "*Compare Changes:*\n<https://github.com/${REPO_NAME}/compare/${PREV_COMMIT}...${GIT_SHA}|View diff ${PREV_COMMIT_SHORT}...${SHORT_SHA}>"
+                  "text": "${COMPARE_TEXT}"
                 }
               },
               {
