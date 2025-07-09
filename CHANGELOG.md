@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0]
+***Date:*** 2025-07-09 15:05:02 UTC
+
+***Author:*** devwithshahzaib
+
+***Commit:*** [f5fea95](https://github.com/devwithshahzaib/changelog-testing/commit/f5fea95e55c4de9df0ff1f7fed8dc9add43c3fe6)
+
+**Message:** [minor-upgrade]chore: ensure changes are staged
+___
+
+
 ## [1.0.114]
 ***Date:*** 2025-07-09 15:01:45 UTC
 
