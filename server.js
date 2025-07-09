@@ -7,7 +7,7 @@ app
   })
   .use((req, res, next) => {
     console.log(`${req.method} ${req.url}`);
-    res.status(404).send('Not Found');
+    res.status(404).send('Not Found.');
     next();
   })
   // eslint-disable-next-line no-unused-vars
