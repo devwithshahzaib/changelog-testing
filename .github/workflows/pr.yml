@@ -41,8 +41,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: Install commitlint dependencies
         run: |
@@ -104,7 +104,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: |
@@ -124,7 +124,7 @@ jobs:
           echo "✅ Tests passed"
 
       - name: Run tests with coverage
-        if: matrix.node-version == 18  # Only run coverage on one Node version
+        if: matrix.node-version == 18 # Only run coverage on one Node version
         run: |
           echo "📊 Running tests with coverage..."
           npm run test:coverage
@@ -140,7 +140,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Check for security vulnerabilities
-        if: matrix.node-version == 18  # Only run security check once
+        if: matrix.node-version == 18 # Only run security check once
         run: |
           echo "🔒 Checking for security vulnerabilities..."
           npm audit --audit-level=moderate
@@ -161,8 +161,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
