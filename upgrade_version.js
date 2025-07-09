@@ -40,6 +40,11 @@ const upgradePackageJSONVersion = () => {
       process.exit(1);
     }
     const newVersion = versionParts.join('.');
+    
+    // Update package.json with the new version
+    packageJson.version = newVersion;
+    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+    
     // Just output the new version number for GitHub Actions to capture
     console.log(newVersion);
     return newVersion;
@@ -50,4 +55,4 @@ const upgradePackageJSONVersion = () => {
 };
 
 // Run the version upgrade and output the new version
-upgradePackageJSONVersion(); 
+upgradePackageJSONVersion();
