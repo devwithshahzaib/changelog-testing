@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0]
+***Date:*** 2025-07-09 15:09:28 UTC
+
+***Author:*** devwithshahzaib
+
+***Commit:*** [f843be1](https://github.com/devwithshahzaib/changelog-testing/commit/f843be1db5d90c8840a5c02be79fd0346038545f)
+
+**Message:** [minor-upgrade]chore: ensure changes are staged
+___
+
+
+## [1.1.100]
+***Date:*** 2025-07-09 15:06:52 UTC
+
+***Author:*** devwithshahzaib
+
+***Commit:*** [86b9cec](https://github.com/devwithshahzaib/changelog-testing/commit/86b9cecb8f07c4f7cb07893de7842f9e796555ae)
+
+**Message:** chore: ensure changes are staged
+___
+
+
+## [1.1.0]
+***Date:*** 2025-07-09 15:05:02 UTC
+
+***Author:*** devwithshahzaib
+
+***Commit:*** [f5fea95](https://github.com/devwithshahzaib/changelog-testing/commit/f5fea95e55c4de9df0ff1f7fed8dc9add43c3fe6)
+
+**Message:** [minor-upgrade]chore: ensure changes are staged
+___
+
+
+## [1.0.114]
+***Date:*** 2025-07-09 15:01:45 UTC
+
+***Author:*** devwithshahzaib
+
+***Commit:*** [585907f](https://github.com/devwithshahzaib/changelog-testing/commit/585907fd2af25b9da05e7cf257d9db38fe7a849b)
+
+**Message:** [minor-upgrade]chore: ensure changes are staged
+___
+
+
 ## [1.0.114]
 ***Date:*** 2025-07-09 14:44:13 UTC
 
