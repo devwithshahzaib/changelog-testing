@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0]
+***Date:*** 2025-07-30 07:34:34 UTC
+
+***Author:*** devwithshahzaib
+
+***Commit:*** [673b67a](https://github.com/devwithshahzaib/changelog-testing/commit/673b67a22919c58cc9ace3a5aa0be8b00df55b6f)
+
+**Message:** [minor-upgrade]chore: enhance Slack notification for version releases with compariso…
+___
+
+
 ## [1.2.0]
 ***Date:*** 2025-07-09 15:09:28 UTC
 
