@@ -2,7 +2,7 @@
   "name": "auto-changelog-workflow",
   "version": "1.3.0",
   "description": "Automated changelog and version management workflow",
-  "main": "index.js",
+  "main": "index.jss",
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
