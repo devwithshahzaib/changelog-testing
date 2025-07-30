@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.100]
+***Date:*** 2025-07-30 07:35:52 UTC
+
+***Author:*** devwithshahzaib
+
+***Commit:*** [e289062](https://github.com/devwithshahzaib/changelog-testing/commit/e28906228b0e18a375281782bf6cbd3c03e524a9)
+
+**Message:** fix: correct main entry point in package.json from index.js to index.jss
+___
+
+
 ## [1.4.0]
 ***Date:*** 2025-07-30 07:34:34 UTC
 
